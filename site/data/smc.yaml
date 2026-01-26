@@ -1,5 +1,5 @@
 - Name: Phillip Cloud
-  Association: Voltron Data
+  Association: NVIDIA
 - Name: Weston Pace
   Association: LanceDB
 - Name: Jacques Nadeau
@@ -7,6 +7,6 @@
 - Name: Victor Barua
   Association: Datadog
 - Name: David Sisson
-  Association: Voltron Data
+  Association: Fused
 - Name: Yongchul Kwon
   Association: Microsoft
