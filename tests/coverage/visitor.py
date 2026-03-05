@@ -238,11 +238,11 @@ class TestCaseVisitor(FuncTestCaseParserVisitor):
         if ctx.DateLiteral() is not None:
             return ctx.getText(), "date"
         if ctx.TimeLiteral() is not None:
-            return ctx.getText(), "time"
+            return ctx.getText(), "pt"
         if ctx.TimestampLiteral() is not None:
-            return ctx.getText(), "ts"
+            return ctx.getText(), "pts"
         if ctx.TimestampTzLiteral() is not None:
-            return ctx.getText(), "tstz"
+            return ctx.getText(), "ptstz"
         if ctx.IntervalDayLiteral() is not None:
             return ctx.getText(), "iday"
         if ctx.IntervalYearLiteral() is not None:
@@ -281,12 +281,6 @@ class TestCaseVisitor(FuncTestCaseParserVisitor):
             return self.visitDecimalArg(ctx.decimalArg())
         if ctx.dateArg() is not None:
             return self.visitDateArg(ctx.dateArg())
-        if ctx.timeArg() is not None:
-            return self.visitTimeArg(ctx.timeArg())
-        if ctx.timestampArg() is not None:
-            return self.visitTimestampArg(ctx.timestampArg())
-        if ctx.timestampTzArg() is not None:
-            return self.visitTimestampTzArg(ctx.timestampTzArg())
         if ctx.intervalDayArg() is not None:
             return self.visitIntervalDayArg(ctx.intervalDayArg())
         if ctx.intervalYearArg() is not None:
@@ -353,18 +347,6 @@ class TestCaseVisitor(FuncTestCaseParserVisitor):
     def visitDateArg(self, ctx: FuncTestCaseParser.DateArgContext):
         type_str = ctx.dateType().getText().lower()
         return CaseLiteral(value=ctx.DateLiteral().getText().strip("'"), type=type_str)
-
-    def visitTimeArg(self, ctx: FuncTestCaseParser.TimeArgContext):
-        type_str = ctx.timeType().getText().lower()
-        return CaseLiteral(value=ctx.TimeLiteral().getText().strip("'"), type=type_str)
-
-    def visitTimestampArg(self, ctx: FuncTestCaseParser.TimestampArgContext):
-        return CaseLiteral(value=ctx.TimestampLiteral().getText().strip("'"), type="ts")
-
-    def visitTimestampTzArg(self, ctx: FuncTestCaseParser.TimestampTzArgContext):
-        return CaseLiteral(
-            value=ctx.TimestampTzLiteral().getText().strip("'"), type="tstz"
-        )
 
     def visitIntervalDayArg(self, ctx: FuncTestCaseParser.IntervalDayArgContext):
         return CaseLiteral(
