@@ -9,4 +9,16 @@
    "constraints": {
     "pixi": "0.66.0"
   }
+  "packageRules": [
+    {
+      "matchFileNames": ["pyproject.toml"],
+      "postUpgradeTasks": {
+        "commands": ["pixi list"],
+        "installTools": {
+          "pixi": {}
+        },
+        "fileFilters": ["pixi.lock"]
+      }
+    }
+  ]
 }
