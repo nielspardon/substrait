@@ -8,7 +8,7 @@
   ],
    "constraints": {
     "pixi": "0.66.0"
-  }
+  },
   "packageRules": [
     {
       "matchFileNames": ["pyproject.toml"],
