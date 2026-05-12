@@ -1,7 +1,7 @@
 [project]
 name = "substrait-specification"
 version = "0.0.0"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.14,<3.15"
 # just used for development, not intended for publication to PyPI
 classifiers = ["Private :: Do Not Upload"]
 
