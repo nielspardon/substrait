@@ -1,11 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(build)",
+    ":semanticCommitScope(deps)",
   ],
-  "semanticCommits": "enabled",
-  "semanticCommitType": "build",
-  "semanticCommitScope": "deps",
    "constraints": {
     "pixi": "0.66.0"
   }
