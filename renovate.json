@@ -7,7 +7,7 @@
     ":semanticCommitScope(deps)",
   ],
    "constraints": {
-    "pixi": "0.66.0"
+    "pixi": "==0.69.0"
   },
   "poetry": {
     "enabled": false
