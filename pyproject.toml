@@ -59,7 +59,8 @@ nodejs = ">=24,<25"
 # code generation
 generate-antlr = { cmd = "make all", cwd = "grammar", description = "Generate ANTLR Python parsers", inputs = ["grammar/*.g4"], outputs = ["tests/type/antlr_parser/*.py", "tests/coverage/antlr_parser/*.py"] }
 generate-protobuf = { cmd = "buf generate", description = "Generate protobuf Python code", inputs = ["proto/**/*.proto"], outputs = ["gen/proto/python/substrait/*.py"] }
-generate = { depends-on = ["generate-antlr", "generate-protobuf"] }
+generate-relation-tests = { cmd = "python tests/relations/build.py", default-environment = "dev", depends-on = ["generate-protobuf"], description = "Generate the relation conformance corpus", inputs = ["tests/relations/build.py", "proto/**/*.proto"], outputs = ["tests/relations/cases/*.json"] }
+generate = { depends-on = ["generate-antlr", "generate-protobuf", "generate-relation-tests"] }
 
 # linting & format checking
 lint-protobuf = { cmd = "buf lint", description = "Lint Protobuf files" }

@@ -1,0 +1,127 @@
+{
+  "behaviors": [
+    "emit_direct"
+  ],
+  "compare": {
+    "order": "ROW_ORDER_MULTISET"
+  },
+  "description": "A ReadRel with an explicit RelCommon.Direct{} emit derives a schema identical to its base_schema.",
+  "expected_rows": {
+    "rows": [
+      {
+        "values": [
+          {
+            "i32": 1
+          },
+          {
+            "string": "x"
+          }
+        ]
+      },
+      {
+        "values": [
+          {
+            "i32": 2
+          },
+          {
+            "string": "y"
+          }
+        ]
+      }
+    ]
+  },
+  "expected_schema": {
+    "names": [
+      "a",
+      "b"
+    ],
+    "struct": {
+      "nullability": "NULLABILITY_REQUIRED",
+      "types": [
+        {
+          "i32": {
+            "nullability": "NULLABILITY_REQUIRED"
+          }
+        },
+        {
+          "string": {
+            "nullability": "NULLABILITY_REQUIRED"
+          }
+        }
+      ]
+    }
+  },
+  "name": "emit_direct_passthrough",
+  "plan": {
+    "relations": [
+      {
+        "root": {
+          "input": {
+            "read": {
+              "base_schema": {
+                "names": [
+                  "a",
+                  "b"
+                ],
+                "struct": {
+                  "nullability": "NULLABILITY_REQUIRED",
+                  "types": [
+                    {
+                      "i32": {
+                        "nullability": "NULLABILITY_REQUIRED"
+                      }
+                    },
+                    {
+                      "string": {
+                        "nullability": "NULLABILITY_REQUIRED"
+                      }
+                    }
+                  ]
+                }
+              },
+              "common": {
+                "direct": {}
+              },
+              "virtual_table": {
+                "expressions": [
+                  {
+                    "fields": [
+                      {
+                        "literal": {
+                          "i32": 1
+                        }
+                      },
+                      {
+                        "literal": {
+                          "string": "x"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "fields": [
+                      {
+                        "literal": {
+                          "i32": 2
+                        }
+                      },
+                      {
+                        "literal": {
+                          "string": "y"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "names": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    ]
+  }
+}

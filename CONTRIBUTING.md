@@ -44,9 +44,16 @@ pixi run test
 ### Code Generation
 
 ```bash
-# Generate both protobuf Python bindings and ANTLR parsers
+# Generate protobuf Python bindings, ANTLR parsers, and the relation
+# conformance corpus
 pixi run generate
 ```
+
+The relation conformance corpus (`tests/relations/`) is generated from a
+deterministic Python builder and checked in; CI regenerates it and fails on any
+diff. If you change `tests/relations/build.py`, run `pixi run generate` (or
+`pixi run generate-relation-tests`) and commit the regenerated cases. See
+[`tests/README.md`](tests/README.md) for details.
 
 ### Documentation
 

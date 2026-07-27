@@ -1,0 +1,108 @@
+// SPDX-License-Identifier: Apache-2.0
+syntax = "proto3";
+
+package substrait.test;
+
+import "substrait/algebra.proto";
+import "substrait/plan.proto";
+import "substrait/type.proto";
+
+option csharp_namespace = "Substrait.Protobuf.Test";
+option go_package = "github.com/substrait-io/substrait-protobuf/go/substraitpb/test";
+option java_multiple_files = true;
+option java_package = "io.substrait.proto.test";
+
+// A single relation-conformance test case.
+//
+// This is a NON-NORMATIVE tooling message. It is not part of the published
+// Substrait specification; it exists only to carry the spec-owned relation
+// conformance corpus. It embeds the spec protos so that a case is a single,
+// self-contained manifest that any producer/consumer can load without a bespoke
+// parser.
+//
+// Each case pins down the field/type derivation AND (for consumers that execute
+// it) the execution semantics of a minimal, single-behavior plan.
+message RelationTestCase {
+  // Unique, stable identifier for the case (e.g. "filter_passthrough"). Used as
+  // the on-disk file name and in coverage reporting.
+  string name = 1;
+
+  // Human-readable description of what the case exercises.
+  string description = 2;
+
+  // Machine-readable tags linking this case to the curated coverage checklist
+  // (e.g. "emit_remap", "join_nullability_outer", "decimal_precision_growth").
+  // The relation type alone (walkable from `plan`) drives the breadth tier
+  // ("every relation type has >=1 case"); these tags drive the depth tier, since
+  // two cases of the same relation type can exercise entirely different
+  // derivation rules.
+  repeated string behaviors = 3;
+
+  // The plan under test. Self-contained: input schema and input rows ride inside
+  // the plan via ReadRel.VirtualTable, so no sidecar data is needed.
+  //
+  // Fixtures are version-agnostic: Plan.version is intentionally omitted in the
+  // checked-in files and stamped with the real Substrait version at packaging
+  // time. The spec repo's own validation stamps a placeholder before checking
+  // well-formedness.
+  substrait.Plan plan = 4;
+
+  // The output schema the plan is expected to derive. Recomputed independently
+  // by the in-repo schema-deriver and asserted equal to this, making the
+  // derivation half correct-by-construction.
+  substrait.NamedStruct expected_schema = 5;
+
+  // The output rows the plan is expected to produce. Author-provided and
+  // structurally checked to conform to `expected_schema`; value-correctness is
+  // validated post-release by real consumers, not by the spec repo's CI.
+  ExpectedData expected_rows = 6;
+
+  // How rows should be compared (order sensitivity, etc.).
+  CompareConfig compare = 7;
+
+  // Reserved for capability requirements used to gate execution against an
+  // engine's dialect file (added in the dialect-gating round).
+  reserved 8;
+  reserved "requires";
+}
+
+// The expected output rows of a test case.
+message ExpectedData {
+  // A single output row: one literal per output column, in schema order.
+  message Row {
+    repeated substrait.Expression.Literal values = 1;
+  }
+
+  repeated Row rows = 1;
+}
+
+// Per-case configuration governing how expected rows are compared to an
+// engine's actual output.
+message CompareConfig {
+  enum RowOrder {
+    ROW_ORDER_UNSPECIFIED = 0;
+    // Rows compared as an unordered multiset. The default for plans whose output
+    // order is not semantically defined.
+    ROW_ORDER_MULTISET = 1;
+    // Rows compared in the exact order given. Use only when the plan ends in a
+    // terminal SortRel/TopNRel.
+    ROW_ORDER_ORDERED = 2;
+  }
+
+  // Row-order sensitivity of the comparison.
+  RowOrder order = 1;
+
+  // Reserved for float comparison tolerance (relative epsilon / ULP), added when
+  // the first floating-point case needs it.
+  reserved 2;
+  reserved "float_tolerance";
+}
+
+// A collection of test cases, for discovery/indexing.
+message TestSuite {
+  // Human-readable name of the suite.
+  string name = 1;
+
+  // The cases in the suite.
+  repeated RelationTestCase cases = 2;
+}

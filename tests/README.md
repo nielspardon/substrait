@@ -339,3 +339,81 @@ In this example:
 - `add(2::i32, 3::i32)` is a nested function call used as an argument
 - The result side can also be a function call, not just a literal
 - Both sides of `=` are evaluated; the test asserts they produce the same value
+
+## Relation Conformance Corpus
+
+While the Substrait Test Format above covers **function** semantics, the
+relation conformance corpus in `tests/relations/` covers **relation** semantics:
+the field/type derivation (and, for consumers that execute them, the row-level
+results) of whole plans.
+
+Each case is a minimal, single-behavior plan — the smallest plan that exercises
+one derivation/execution behavior — so a failure localizes to one relation.
+Input schema and input rows ride inside the plan via `ReadRel.VirtualTable`, so
+each case is fully self-contained (no sidecar data files).
+
+> **Status:** This corpus and its `substrait.test` protobuf package are
+> non-normative tooling, not part of the published specification, and are being
+> introduced incrementally. The first round covers `ReadRel`/`FilterRel`/
+> `SortRel` schema identity and both arms of `RelCommon.emit_kind` (explicit
+> `Direct` and `Emit` remapping).
+>
+> Every case sets `RelCommon.emit_kind` explicitly (`Direct` or `Emit`); no case
+> relies on an unset `emit_kind`. This anticipates a proposed spec rule that
+> `emit_kind` must be set (mirroring the enum convention where a specific
+> non-`UNSPECIFIED` value must be chosen). If that proposal is declined, the
+> deriver's unset handling is a one-line revert.
+
+### What a case is
+
+A case is a `substrait.test.RelationTestCase` message (defined in
+`proto/substrait/test/relation_test_case.proto`), serialized as canonical
+protobuf-JSON, one file per case under `tests/relations/cases/`. It carries:
+
+- `plan` — the self-contained plan under test (a `ReadRel.VirtualTable` feeds
+  literal rows into the relation being exercised);
+- `expected_schema` — the output `NamedStruct` the plan should derive;
+- `expected_rows` — the output rows the plan should produce;
+- `behaviors` — tags linking the case to the curated coverage checklist (e.g.
+  `emit_remap`);
+- `compare` — row comparison configuration (multiset vs. ordered).
+
+Fixtures are **version-agnostic**: `Plan.version` is intentionally omitted from
+the checked-in files and stamped with the real Substrait version at packaging
+time, so releases produce no churn here.
+
+### Authoring a case
+
+Cases are **not hand-edited**. They are emitted by a deterministic Python
+builder so the JSON stays canonical and diffable:
+
+1. Add a builder function to `tests/relations/build.py` and register it in the
+   `CASES` list.
+2. Regenerate the corpus:
+
+   ```bash
+   pixi run generate-relation-tests
+   ```
+
+3. Commit both `build.py` and the regenerated `tests/relations/cases/*.json`.
+
+CI regenerates the corpus and runs `git diff --exit-code`, so any un-regenerated
+change fails the build — the same drift guard used for the ANTLR parsers.
+
+### Validation
+
+`tests/test_relation_corpus.py` validates every case:
+
+1. **Well-formedness** — strictly parses each file into a `RelationTestCase`,
+   rejecting unknown fields.
+2. **Schema derivation** — an in-repo, schema-only deriver
+   (`tests/relations/deriver.py`) independently recomputes the output schema from
+   the plan and asserts it equals `expected_schema`. This makes the derivation
+   half **correct by construction**. The deriver is *not* an execution engine; it
+   never touches row values, and it raises on relations/schema shapes outside its
+   current scope rather than deriving something wrong.
+3. **Row conformance** — asserts each `expected_rows` row conforms structurally
+   to `expected_schema` (arity, and per-column literal type/nullability). Row
+   *value* correctness is intentionally out of scope for the spec repo — it is
+   validated post-release by real consumers executing the corpus in their own
+   harness.

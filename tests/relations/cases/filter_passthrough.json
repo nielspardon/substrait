@@ -1,0 +1,139 @@
+{
+  "behaviors": [
+    "filter_passthrough"
+  ],
+  "compare": {
+    "order": "ROW_ORDER_MULTISET"
+  },
+  "description": "A FilterRel with an explicit Direct emit and a constant-true condition over a two-column VirtualTable derives a schema identical to its input.",
+  "expected_rows": {
+    "rows": [
+      {
+        "values": [
+          {
+            "i32": 1
+          },
+          {
+            "string": "x"
+          }
+        ]
+      },
+      {
+        "values": [
+          {
+            "i32": 2
+          },
+          {
+            "string": "y"
+          }
+        ]
+      }
+    ]
+  },
+  "expected_schema": {
+    "names": [
+      "a",
+      "b"
+    ],
+    "struct": {
+      "nullability": "NULLABILITY_REQUIRED",
+      "types": [
+        {
+          "i32": {
+            "nullability": "NULLABILITY_REQUIRED"
+          }
+        },
+        {
+          "string": {
+            "nullability": "NULLABILITY_REQUIRED"
+          }
+        }
+      ]
+    }
+  },
+  "name": "filter_passthrough",
+  "plan": {
+    "relations": [
+      {
+        "root": {
+          "input": {
+            "filter": {
+              "common": {
+                "direct": {}
+              },
+              "condition": {
+                "literal": {
+                  "boolean": true
+                }
+              },
+              "input": {
+                "read": {
+                  "base_schema": {
+                    "names": [
+                      "a",
+                      "b"
+                    ],
+                    "struct": {
+                      "nullability": "NULLABILITY_REQUIRED",
+                      "types": [
+                        {
+                          "i32": {
+                            "nullability": "NULLABILITY_REQUIRED"
+                          }
+                        },
+                        {
+                          "string": {
+                            "nullability": "NULLABILITY_REQUIRED"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "common": {
+                    "direct": {}
+                  },
+                  "virtual_table": {
+                    "expressions": [
+                      {
+                        "fields": [
+                          {
+                            "literal": {
+                              "i32": 1
+                            }
+                          },
+                          {
+                            "literal": {
+                              "string": "x"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "fields": [
+                          {
+                            "literal": {
+                              "i32": 2
+                            }
+                          },
+                          {
+                            "literal": {
+                              "string": "y"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "names": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    ]
+  }
+}

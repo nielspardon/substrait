@@ -1,0 +1,148 @@
+{
+  "behaviors": [
+    "emit_remap"
+  ],
+  "compare": {
+    "order": "ROW_ORDER_MULTISET"
+  },
+  "description": "A ReadRel whose RelCommon.Emit output_mapping is [2, 0] outputs columns (c, a) -- reordered and subset from the input (a, b, c).",
+  "expected_rows": {
+    "rows": [
+      {
+        "values": [
+          {
+            "i32": 10
+          },
+          {
+            "i32": 1
+          }
+        ]
+      },
+      {
+        "values": [
+          {
+            "i32": 20
+          },
+          {
+            "i32": 2
+          }
+        ]
+      }
+    ]
+  },
+  "expected_schema": {
+    "names": [
+      "c",
+      "a"
+    ],
+    "struct": {
+      "nullability": "NULLABILITY_REQUIRED",
+      "types": [
+        {
+          "i32": {
+            "nullability": "NULLABILITY_REQUIRED"
+          }
+        },
+        {
+          "i32": {
+            "nullability": "NULLABILITY_REQUIRED"
+          }
+        }
+      ]
+    }
+  },
+  "name": "emit_remap_reorder",
+  "plan": {
+    "relations": [
+      {
+        "root": {
+          "input": {
+            "read": {
+              "base_schema": {
+                "names": [
+                  "a",
+                  "b",
+                  "c"
+                ],
+                "struct": {
+                  "nullability": "NULLABILITY_REQUIRED",
+                  "types": [
+                    {
+                      "i32": {
+                        "nullability": "NULLABILITY_REQUIRED"
+                      }
+                    },
+                    {
+                      "string": {
+                        "nullability": "NULLABILITY_REQUIRED"
+                      }
+                    },
+                    {
+                      "i32": {
+                        "nullability": "NULLABILITY_REQUIRED"
+                      }
+                    }
+                  ]
+                }
+              },
+              "common": {
+                "emit": {
+                  "output_mapping": [
+                    2,
+                    0
+                  ]
+                }
+              },
+              "virtual_table": {
+                "expressions": [
+                  {
+                    "fields": [
+                      {
+                        "literal": {
+                          "i32": 1
+                        }
+                      },
+                      {
+                        "literal": {
+                          "string": "x"
+                        }
+                      },
+                      {
+                        "literal": {
+                          "i32": 10
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "fields": [
+                      {
+                        "literal": {
+                          "i32": 2
+                        }
+                      },
+                      {
+                        "literal": {
+                          "string": "y"
+                        }
+                      },
+                      {
+                        "literal": {
+                          "i32": 20
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "names": [
+            "c",
+            "a"
+          ]
+        }
+      }
+    ]
+  }
+}
