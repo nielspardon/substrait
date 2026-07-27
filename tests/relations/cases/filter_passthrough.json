@@ -5,7 +5,7 @@
   "compare": {
     "order": "ROW_ORDER_MULTISET"
   },
-  "description": "A FilterRel with an explicit Direct emit and a constant-true condition over a two-column VirtualTable derives a schema identical to its input.",
+  "description": "A FilterRel with a constant-true condition over a two-column VirtualTable derives a schema identical to its input. Neither relation sets emit_kind, exercising the unset == Direct default.",
   "expected_rows": {
     "rows": [
       {
@@ -58,9 +58,6 @@
         "root": {
           "input": {
             "filter": {
-              "common": {
-                "direct": {}
-              },
               "condition": {
                 "literal": {
                   "boolean": true
@@ -88,9 +85,6 @@
                         }
                       ]
                     }
-                  },
-                  "common": {
-                    "direct": {}
                   },
                   "virtual_table": {
                     "expressions": [

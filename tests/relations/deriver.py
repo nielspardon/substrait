@@ -17,15 +17,14 @@ schema shapes outside the scope above raise ``UnsupportedRelation`` /
 ``UnsupportedSchema`` rather than deriving something wrong silently; support is
 added alongside the cases that need it.
 
-Provisional rule -- ``RelCommon.emit_kind`` must be set
-=======================================================
-This deriver assumes the *proposed* rule that ``RelCommon.emit_kind`` must be
-one of ``Direct``/``Emit`` and treats an unset ``emit_kind`` on a relation that
-carries a ``RelCommon`` as a derivation error, rather than silently defaulting
-to ``Direct``. The corpus authors every case with an explicit ``emit_kind`` to
-match. If the community declines the proposal (i.e. unset stays equivalent to
-``Direct``), revert ``_apply_emit`` to treat an unset ``emit_kind`` as a
-passthrough.
+Unset ``RelCommon.emit_kind`` means ``Direct``
+==============================================
+Leaving ``emit_kind`` unset -- and, equivalently, omitting the ``RelCommon``
+section entirely -- is defined to mean ``Direct``: the relation outputs its
+columns as is. This is the documented default (substrait-io/substrait#1142) and
+the single most common relation shape in real plans, so the deriver treats an
+unset ``emit_kind`` and an absent ``common`` as passthrough, identical to an
+explicit ``Direct``.
 """
 
 from substrait import algebra_pb2 as alg
@@ -69,28 +68,15 @@ def _columns_from_named_struct(schema: type_pb2.NamedStruct) -> list[Column]:
     return list(zip(names, types, strict=True))
 
 
-def _apply_emit(
-    has_common: bool, common: alg.RelCommon, columns: list[Column]
-) -> list[Column]:
+def _apply_emit(common: alg.RelCommon, columns: list[Column]) -> list[Column]:
     """Apply a relation's RelCommon.emit_kind to its input columns.
 
-    Enforces the provisional "emit_kind must be set" rule (see module docstring):
-    every relation must carry a ``RelCommon`` whose ``emit_kind`` is explicitly
-    ``Direct`` or ``Emit``. An absent ``common``, or a present ``common`` with an
-    unset ``emit_kind``, is a derivation error rather than an implicit ``Direct``.
-
-    ``Direct`` passes columns through unchanged; ``Emit`` selects/reorders them by
-    ``output_mapping`` indices.
+    ``Direct`` -- and an unset ``emit_kind`` (equivalently, an absent
+    ``common``), which is defined to mean ``Direct`` -- passes columns through
+    unchanged. ``Emit`` selects/reorders them by ``output_mapping`` indices.
     """
-    emit_kind = common.WhichOneof("emit_kind") if has_common else None
-    if emit_kind is None:
-        raise DerivationError(
-            "RelCommon.emit_kind must be set to Direct or Emit "
-            "(unset emit_kind is not conformant under the assumed rule)"
-        )
-    if emit_kind == "direct":
+    if common.WhichOneof("emit_kind") != "emit":
         return columns
-    # emit_kind == "emit"
     out = []
     for idx in common.emit.output_mapping:
         if idx < 0 or idx >= len(columns):
@@ -108,15 +94,15 @@ def _derive_columns(rel: alg.Rel) -> list[Column]:
     if kind == "read":
         read = rel.read
         columns = _columns_from_named_struct(read.base_schema)
-        return _apply_emit(read.HasField("common"), read.common, columns)
+        return _apply_emit(read.common, columns)
     if kind == "filter":
         # FilterRel does not change the schema; it only drops rows.
         columns = _derive_columns(rel.filter.input)
-        return _apply_emit(rel.filter.HasField("common"), rel.filter.common, columns)
+        return _apply_emit(rel.filter.common, columns)
     if kind == "sort":
         # SortRel does not change the schema; it only reorders rows.
         columns = _derive_columns(rel.sort.input)
-        return _apply_emit(rel.sort.HasField("common"), rel.sort.common, columns)
+        return _apply_emit(rel.sort.common, columns)
     raise UnsupportedRelation(f"cannot derive schema for relation type {kind!r}")
 
 

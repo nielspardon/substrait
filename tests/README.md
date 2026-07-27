@@ -355,14 +355,14 @@ each case is fully self-contained (no sidecar data files).
 > **Status:** This corpus and its `substrait.test` protobuf package are
 > non-normative tooling, not part of the published specification, and are being
 > introduced incrementally. The first round covers `ReadRel`/`FilterRel`/
-> `SortRel` schema identity and both arms of `RelCommon.emit_kind` (explicit
-> `Direct` and `Emit` remapping).
+> `SortRel` schema identity and `RelCommon.emit_kind` in all three states
+> (unset, explicit `Direct`, and `Emit` remapping).
 >
-> Every case sets `RelCommon.emit_kind` explicitly (`Direct` or `Emit`); no case
-> relies on an unset `emit_kind`. This anticipates a proposed spec rule that
-> `emit_kind` must be set (mirroring the enum convention where a specific
-> non-`UNSPECIFIED` value must be chosen). If that proposal is declined, the
-> deriver's unset handling is a one-line revert.
+> An unset `RelCommon.emit_kind` (and an absent `common`) means `Direct` — the
+> documented default and the most common relation shape in real plans. The
+> corpus covers all three states: `filter_passthrough` leaves `emit_kind` unset,
+> `emit_direct_passthrough` sets an explicit `Direct`, and `emit_remap_reorder`
+> uses `Emit`.
 
 ### What a case is
 

@@ -75,10 +75,10 @@ def named_struct(fields: list[tuple[str, type_pb2.Type]]) -> type_pb2.NamedStruc
 def direct() -> alg.RelCommon:
     """A RelCommon whose emit_kind is an explicit ``Direct{}`` (passthrough).
 
-    Every relation in the corpus sets ``emit_kind`` explicitly -- the corpus
-    assumes the proposed rule that ``RelCommon.emit_kind`` must be one of
-    ``Direct``/``Emit`` and that an unset ``emit_kind`` is not conformant. No
-    case relies on the historical "unset == Direct" interpretation.
+    An unset ``emit_kind`` is defined to mean ``Direct`` (see
+    substrait-io/substrait#1142), so this is the explicit spelling of the
+    default. The corpus covers both: ``filter_passthrough`` leaves ``emit_kind``
+    unset, while ``emit_direct_passthrough`` sets it explicitly via this helper.
     """
     return alg.RelCommon(direct=alg.RelCommon.Direct())
 
@@ -106,13 +106,12 @@ def virtual_table(
 ) -> alg.Rel:
     """A ReadRel over an inline VirtualTable of literal rows.
 
-    Each row is a list of literals, one per column of ``schema``. The ReadRel
-    carries an explicit ``Direct`` emit_kind so no case relies on an unset
-    ``emit_kind`` (see ``direct()``).
+    Each row is a list of literals, one per column of ``schema``. ``emit_kind``
+    is left unset, which means ``Direct`` (see ``direct()``); cases that need an
+    explicit emit_kind set ``common`` on the ReadRel themselves.
     """
     return alg.Rel(
         read=alg.ReadRel(
-            common=direct(),
             base_schema=schema,
             virtual_table=alg.ReadRel.VirtualTable(
                 expressions=[
@@ -174,6 +173,9 @@ def filter_passthrough() -> tc.RelationTestCase:
     """FilterRel(true) over a VirtualTable: output schema == input schema.
 
     Exercises the trivial identity derivation used to stand up the harness.
+    Neither the FilterRel nor its input ReadRel sets ``emit_kind``, so this case
+    also pins down that an unset ``emit_kind`` means ``Direct`` (passthrough) --
+    the documented default and the most common relation shape in real plans.
     """
     schema = named_struct([("a", i32()), ("b", string())])
     read = virtual_table(
@@ -185,7 +187,6 @@ def filter_passthrough() -> tc.RelationTestCase:
     )
     filt = alg.Rel(
         filter=alg.FilterRel(
-            common=direct(),
             input=read,
             condition=alg.Expression(literal=alg.Expression.Literal(boolean=True)),
         )
@@ -193,9 +194,9 @@ def filter_passthrough() -> tc.RelationTestCase:
     return case(
         name="filter_passthrough",
         description=(
-            "A FilterRel with an explicit Direct emit and a constant-true "
-            "condition over a two-column VirtualTable derives a schema "
-            "identical to its input."
+            "A FilterRel with a constant-true condition over a two-column "
+            "VirtualTable derives a schema identical to its input. Neither "
+            "relation sets emit_kind, exercising the unset == Direct default."
         ),
         behaviors=["filter_passthrough"],
         plan=make_plan(filt, output_names=["a", "b"]),
@@ -260,15 +261,16 @@ def emit_remap_reorder() -> tc.RelationTestCase:
 def emit_direct_passthrough() -> tc.RelationTestCase:
     """An explicit RelCommon.Direct{} passes the schema through unchanged.
 
-    Complements emit_remap_reorder by exercising the other arm of the emit_kind
-    oneof: `common { direct {} }`, the canonical schema-preserving emit. Every
-    case in the corpus sets emit_kind explicitly (see ``direct()``); this case
-    pins down that an explicit Direct is the identity on the output schema.
+    Complements emit_remap_reorder by exercising the explicit-Direct arm of the
+    emit_kind oneof: `common { direct {} }`, the canonical schema-preserving
+    emit. Together with ``filter_passthrough`` (which leaves emit_kind unset)
+    this pins down that an explicit Direct and an unset emit_kind derive the same
+    output schema.
     """
     schema = named_struct([("a", i32()), ("b", string())])
     read = alg.Rel(
         read=alg.ReadRel(
-            common=alg.RelCommon(direct=alg.RelCommon.Direct()),
+            common=direct(),
             base_schema=schema,
             virtual_table=alg.ReadRel.VirtualTable(
                 expressions=[
@@ -292,7 +294,8 @@ def emit_direct_passthrough() -> tc.RelationTestCase:
         name="emit_direct_passthrough",
         description=(
             "A ReadRel with an explicit RelCommon.Direct{} emit derives a schema "
-            "identical to its base_schema."
+            "identical to its base_schema -- equivalent to leaving emit_kind "
+            "unset (see filter_passthrough)."
         ),
         behaviors=["emit_direct"],
         plan=make_plan(read, output_names=["a", "b"]),

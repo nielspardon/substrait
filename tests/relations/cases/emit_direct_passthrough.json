@@ -5,7 +5,7 @@
   "compare": {
     "order": "ROW_ORDER_MULTISET"
   },
-  "description": "A ReadRel with an explicit RelCommon.Direct{} emit derives a schema identical to its base_schema.",
+  "description": "A ReadRel with an explicit RelCommon.Direct{} emit derives a schema identical to its base_schema -- equivalent to leaving emit_kind unset (see filter_passthrough).",
   "expected_rows": {
     "rows": [
       {
